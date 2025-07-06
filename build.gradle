@@ -1,0 +1,83 @@
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'info.solidsoft.pitest' version '1.15.0'
+	id 'org.springframework.boot' version '3.5.3'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.bci'
+version = '0.1.0-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+
+	runtimeOnly 'com.h2database:h2'
+	compileOnly "org.projectlombok:lombok:1.18.38"
+	annotationProcessor "org.projectlombok:lombok:1.18.38"
+	implementation "org.mapstruct:mapstruct:1.5.5.Final"
+	annotationProcessor "org.mapstruct:mapstruct-processor:1.5.5.Final"
+
+	implementation "org.springframework.boot:spring-boot-starter-web"
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+jacocoTestReport {
+	getExecutionData().setFrom(fileTree(buildDir).include("/jacoco/*.exec"))
+	reports.xml.required = true
+
+	afterEvaluate {
+		classDirectories.setFrom(files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+					'com/bci/user/infraestructure/config/**',
+					'com/bci/user/adapters/inbound/mapper/**',
+					'com/bci/user/adapters/inbound/api/request/**',
+					'com/bci/user/adapters/inbound/api/response/**',
+					'com/bci/user/domain/exception/**',
+					'**/UserApplication.class'])
+		}))
+	}
+}
+
+pitest {
+	threads.set(2)
+	timestampedReports.set(false)
+	junit5PluginVersion.set('1.2.1')
+	targetClasses.set([
+			'com.bci.user.adapters.*',
+			'com.bci.user.domain.*'])
+	targetTests.set([
+			'com.bci.user.adapters.*',
+			'com.bci.user.domain.*'])
+	excludedClasses.set([
+			'com.bci.user.adapters.inbound.mapper.*',
+			'com.bci.user.adapters.inbound.api.request.*',
+			'com.bci.user.adapters.inbound.api.response.*',
+			'com.bci.user.general.domain.model.*',
+			'com.bci.user.domain.exception.*',
+			'com.bci.user.UserApplication*'])
+	mutationThreshold.set(80)
+	enableDefaultIncrementalAnalysis.set(true)
+}
