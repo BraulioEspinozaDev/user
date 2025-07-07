@@ -37,6 +37,23 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Realiza el proceso de autenticación de un usuario y genera un token JWT.
+     * <p>
+     * Este endpoint valida las credenciales del usuario, genera un token JWT
+     * en caso de autenticación exitosa, y calcula la fecha de expiración del token.
+     * Maneja diferentes tipos de excepciones de autenticación y proporciona
+     * respuestas apropiadas para cada caso.
+     * </p>
+     *
+     * @param loginRequest objeto que contiene las credenciales del usuario (username y password)
+     * @return ResponseEntity con los datos del login exitoso incluyendo el token JWT,
+     *         username y fecha de expiración, o mensaje de error en caso de falla
+     * @throws BadCredentialsException si las credenciales proporcionadas son inválidas
+     * @throws AuthenticationException si ocurre un error durante el proceso de autenticación
+     * @see LoginRequest
+     * @see LoginResponse
+     */
     @PostMapping("login")
     @Operation(summary = "Realiza login", description = "Usuario y password")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -50,6 +67,7 @@ public class AuthController {
                             loginRequest.getPassword()
                     )
             );
+            log.info("Autenticación exitosa para : {}", authentication.getName());
 
             // Generar token JWT
             String token = jwtUtil.generateToken(loginRequest.getUsername());
@@ -82,6 +100,20 @@ public class AuthController {
         }
     }
 
+    /**
+     * Realiza el proceso de logout cerrando la sesión del usuario.
+     * <p>
+     * Este endpoint procesa la solicitud de logout del usuario, extrae el token
+     * JWT del header Authorization y registra el evento de logout. Actualmente
+     * no invalida el token del lado del servidor, pero registra el evento
+     * para auditoría.
+     * </p>
+     *
+     * @param token token JWT en el header Authorization con formato "Bearer {token}"
+     * @return ResponseEntity con mensaje de confirmación de logout exitoso
+     *         o mensaje de error en caso de falla
+     * @throws Exception si ocurre un error durante el procesamiento del logout
+     */
     @PostMapping("logout")
     @Operation(summary = "Realiza logout", description = "Cierra sesión")
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {
@@ -100,6 +132,20 @@ public class AuthController {
         }
     }
 
+    /**
+     * Valida un token JWT verificando su autenticidad y estado de expiración.
+     * <p>
+     * Este endpoint recibe un token JWT en el header Authorization,
+     * verifica su validez y estado de expiración, y retorna información
+     * sobre el estado del token incluyendo el usuario asociado.
+     * </p>
+     *
+     * @param token token JWT en el header Authorization con formato "Bearer {token}"
+     * @return ResponseEntity con mensaje de confirmación si el token es válido
+     *         incluyendo el username asociado, o mensaje de error si el token
+     *         es inválido o ha expirado
+     * @throws Exception si ocurre un error durante la validación del token
+     */
     @GetMapping("validate")
     @Operation(summary = "Valida Token", description = "Validación de token")
     public ResponseEntity<String> validateToken(@RequestHeader("Authorization") String token) {

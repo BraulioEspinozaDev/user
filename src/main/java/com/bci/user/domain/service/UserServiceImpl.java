@@ -22,6 +22,12 @@ public class UserServiceImpl implements UserService {
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final UserRepository userRepository;
 
+    /**
+     * Recupera todos los usuarios del sistema.
+     *
+     * @return Lista de todos los usuarios registrados en el sistema
+     * @throws FindAllUserException si ocurre un error durante la consulta a la base de datos
+     */
     @Override
     public List<User> findAll() {
         try{
@@ -33,6 +39,18 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    /**
+     * Crea un nuevo usuario en el sistema.
+     *
+     * Este método valida que el email del usuario no exista previamente,
+     * encripta la contraseña, procesa el token y establece el estado activo
+     * del usuario antes de guardarlo en la base de datos.
+     *
+     * @param user El objeto User a crear con todos los datos necesarios
+     * @return El usuario creado con sus datos actualizados (ID generado, contraseña encriptada, etc.)
+     * @throws EmailException si ya existe un usuario con el mismo email
+     * @throws CreateUserException si ocurre un error durante el proceso de creación
+     */
     @Override
     @Transactional
     public User create(User user) {
