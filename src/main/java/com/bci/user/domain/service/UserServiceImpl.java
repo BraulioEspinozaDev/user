@@ -1,12 +1,15 @@
 package com.bci.user.domain.service;
 
+import com.bci.user.domain.exception.CreateUserException;
 import com.bci.user.domain.exception.EmailException;
+import com.bci.user.domain.exception.FindAllUserException;
 import com.bci.user.domain.model.User;
 import com.bci.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,10 +24,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<User> findAll() {
-        return userRepository.findAll();
+        try{
+            return userRepository.findAll();
+        } catch (Exception e){
+            log.error("Error al obtener usuarios: {}", e.getMessage());
+            throw new FindAllUserException();
+        }
     }
 
+
     @Override
+    @Transactional
     public User create(User user) {
         Optional<User> userSameEmail = userRepository.findByEmail(user.getEmail());
         if(userSameEmail.isPresent()) {
@@ -39,7 +49,7 @@ public class UserServiceImpl implements UserService {
             return userRepository.save(user);
         } catch (Exception ex) {
             log.error("Error al crear usuario: {}", ex.getMessage());
-            return null;
+            throw new CreateUserException();
         }
     }
 
